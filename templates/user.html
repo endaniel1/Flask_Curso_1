@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Index</title>
+</head>
+<body>
+	<h4>Los Usuario:</h4>
+	<h4>{{nombre}}</h4>
+	<p>{{ano}}</p>
+	{% if ano > 18 %}
+		<p>Es Mayor De Edad</p>
+	{% endif %}
+	<p>Mi Lista</p>
+	{% for lista in my_lista %}
+		<p>{{lista}}</p>
+	{% endfor %}
+</body>
+</html>
