@@ -1,7 +1,16 @@
-{% macro show_list_h(value) %}
-	<h1>{{ value }}</h1>
-	<h2>{{ value }}</h2>
-	<h3>{{ value }}</h3>
-	<h4>{{ value }}</h4>
-	<h5>{{ value }}</h5>
+{# 
+	Aqui con macro creamos como una expecie de lugar q vamos a utilizar para renderizar lo q le vayamos diciendo y q sera llamado en la secciones de nuestros html es como un include de informacion(en este caso recibe un parametro).
+	
+	Despues mas adelante con lo q vamos a querer q renderize en este caso es un label y un input eso lo hace porque importamos en los archivo de python clases q lo hacen automaticamente.
+
+	Despues lo q q se hace es q con lo de la clase field.label q trae la variable creamos un label html, y despues field() y dentro de los parentesis recivira la lista de los atributos q quieres q tenga nuestros input en este caso y despues con |safe le indicamos q lo pase html o q lo renderize
+#}
+
+{% macro render_field(field) %}
+	{# 
+		Aqui se le puede colocar el html q se quiere q tenga
+	#}
+	<td>{{ field.label }}
+	<dd>{{ field(**kwargs)|safe }}
+
 {% endmacro %}
