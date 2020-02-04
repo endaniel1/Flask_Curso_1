@@ -3,7 +3,9 @@ from flask import render_template
 from flask import request
 from flask_wtf import CsrfProtect #Aqui esta es para tener un token o Csrf para nuestros formularios
 
-from flask import flash 
+from flask import flash #Aqui para los mensajes 
+
+from flask import g #Aqui para utilizar variable de tipo global
 
 from flask import url_for #Aqui esta es para solo decirle a q url se quiere q vayamos
 from flask import redirect #Aqui con esta es para redireccionarnos a un lugar
@@ -13,6 +15,8 @@ from flask import session #Aqui para el manejo de sessiones
 from flask import make_response #Este es para los cookies
 
 import forms #Aqui importamos el archivo forms.py de nuestro proyecto
+import json #Aqui para trabajar con formato Json
+
 
 app = Flask(__name__)
 app.secret_key = "Enrique" #Aqui creamos una clave secreta para nuestra aplicacion puede ser cualquiera
@@ -26,14 +30,30 @@ def page_not_found(error): #Esta funcion resive como parametro un error
 	return render_template("404.html"),404
 
 
+#Aqui sencillamente esta funcion se va a ejecutar siempre oosea de primer lugar antes q se ejecute otra funcion
+@app.before_request
+def before_request():
+	g.test=[1,2,3,4]
+	if "username" not in session:#Aqui sencillamente valido si no existe la variable de session
+		#print(request.endpoint)
+		print("El Usuario Nesecita Login!")
+
 @app.route("/")
 def index():
-	if "username" in session:
+	print(g.test)
+	if "username" in session: 
 		username=session["username"]
-		print(username)
+		#print(username)
 	title="Curso Flask| Bienvenido"
 	return render_template("index.html",title=title)
 
+#Este funcion se va a ejecutar al final o despues q se ejecute la funciones q comparte la vista
+@app.after_request
+def after_request(response):
+	print(g.test)
+	return response #Aqui siempre se va a devolver algo para q funcione esta funcion
+
+#Aqui funcion para crear un comentario
 @app.route('/comment',methods=["GET","POST"])
 def comment():
 
@@ -92,6 +112,17 @@ def cookie():
 	reponse.set_cookie("custome_cookie","Enrique")
 	return reponse #Aqui sencillamente retornamos nuestra vista q ya es un cookie
 
+#Aqui la ruta de forma de Ajax para el login
+@app.route('/ajax-login',methods=["POST"])
+def ajax_login():
+	print(request.form)#Aqui mostramos mlos datos q trae el formulario
+	username=request.form["username"]#Obtengo lso datos del username
+	response={
+		"status":400,
+		"username":username,
+		"id":1
+	}
+	return json.dumps(response)#Aqui retorno en formato json los datos con la clase json.dumps()
 
 if __name__=='__main__':
 	app.run(debug=True,port=8080)

@@ -1,3 +1,3 @@
 $(document).ready(function(e){
-	alert("Hola estas utilizando Flask");
+	console.log("Hola estas utilizando Flask");
 });

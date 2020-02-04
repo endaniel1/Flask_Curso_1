@@ -5,7 +5,7 @@
 {% block content %}
 	{% from "_macro.html" import render_field %}
 	<div class="container">
-		<form class="text-center"  method="POST" accept-charset="utf-8">
+		<form class="text-center" id="form-login" method="POST" accept-charset="utf-8">
 
 			<input type="hidden" name="csrf_token" value="{{csrf_token()}}">
 
