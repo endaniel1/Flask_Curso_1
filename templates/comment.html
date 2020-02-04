@@ -1,0 +1,40 @@
+{# 
+	Aqui con la palabra extends y luego le indamos la ruta del archivo, lo q hacemos es crear o mejor dicho extendemos nuestros archivo q haga como una copia de el para luego utilizarlo como plantilla obtiniendo asi todas las cosa q carga en el
+#}
+{% extends "base/main.html" %}
+
+{# 
+	Aqui llamamos a la seccion de block y le indicamos q es lo q se quiere q tenga esa seccion o block
+#}
+{% block title  %} {{title}} {% endblock %}
+
+{% block content %}
+		{# 
+			Aqui con form lo q hacemos es llamar a el archivo luego importamos lo q queremos
+			Mas Adelante con render_field() le indicamos q vamos a rendirizar lo q queremos q haga en el archivo expecificado(un input) y ademas le pasamos los atributos q va a tener como segundo parametro  
+		#}
+	{% from "_macro.html" import render_field %}
+	<div class="container">
+		<form class="text-center" method="POST" name="sentMenssage" id="contactForm">
+			
+			<div class="form-group text-left">
+				{{ render_field(form.username,class="form-control",required="required") }}
+			</div>
+
+			<div class="form-group text-left">
+				{{ render_field(form.email,class="form-control",required="required") }}
+			</div>
+
+			<div class="form-group text-left">
+				{{ render_field(form.comment,class="form-control") }}
+			</div>	
+
+			{{ form.honeypot }}
+
+			<button type="submit" class="btn btn-primary">Enviar</button>
+			<button type="reset" class="btn btn-danger">Reset</button>
+		</form>
+	</div>	
+{% endblock %}
+	
+	

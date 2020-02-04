@@ -21,11 +21,22 @@
 </head>
 <body>
 	<h4 class="text-center">Bienvenido al Curso de Flaks¡</h4>
+	
+	{% with messages=get_flashed_messages() %}
+		{% if messages %}			
+			<div class="alert alert-success">
+				{% for message in messages %}
+					{{message}}
+				{% endfor %}
+			</div>			
+		{% endif %}
+	{% endwith %}
 
 	<!-- Aqui Donde va el bloque del contenido-->
 	{% block content %}
 	{% endblock %}
-			
+	
+	<hr class="star-primary">	 
 	<footer>
 		<div class="container">
 			<div class="row">				
