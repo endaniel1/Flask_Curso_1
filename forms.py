@@ -8,6 +8,7 @@ from wtforms.fields.html5 import EmailField #Para input de tipo Email
 from wtforms import HiddenField #Para input de tipo Hidden
 from wtforms import PasswordField #Para input de tipo Password
 
+from models import User #Aqui tenemos q importar el modelo User para hacer consultas antes de hacer los registros
 
 #Aqui importamos la clase validators q tiene nuestros archivo wtforms, en la cual se va a encargar de las validaciones
 from wtforms import validators
@@ -48,4 +49,23 @@ class LoginForm(Form):
 				validators.Required(message="El Password Es Requerido!.")
 			])
 		
-
+#Esta clase para crear el formario de creacion de usuario
+class CreateUser(Form):
+	username = StringField("Username",[
+					validators.Required(message="El Username Es Requerido!."),
+					validators.length(min=4,max=25,message="Ingrese Un Username Valido!.")
+				])
+	email =	EmailField("Correo electronico",[
+				validators.Required(message="El Email Es Requerido!."),
+				validators.Email(message="Ingrese Un Email Valido")
+			])
+	password=PasswordField("Contraseña",[
+				validators.Required(message="El Password Es Requerido!.")
+			])
+	#Aqui se crea este metodo a partir de los q vamos a hacer con los datos enviado en nuestro formulario
+	#lo q recivemos es el formulario y el campo de texto(obligatorio para q funcione)
+	def validate_username(form,field):
+		username=field.data#Aqui otenemos los datos del username del formulario
+		user=User.query.filter_by(username=username).first()#consultamos aqui si existe en la base de dato
+		if user is not None:#comprobamos si no existe y si existe le mandomos este mensaje o excepcion 
+			raise validators.ValidationError("El Username Se Encuentra en Uso!.")

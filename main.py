@@ -17,11 +17,16 @@ from flask import make_response #Este es para los cookies
 import forms #Aqui importamos el archivo forms.py de nuestro proyecto
 import json #Aqui para trabajar con formato Json
 
+from config import DevelopmentConfig #Aqui importamos este archivo con esta clase para hacer las configuraciones para nuestrso servidor
+
+from models import db #Aqui importamos nuestra conexion
+from models import User #Aqui importamos el modelo User
 
 app = Flask(__name__)
-app.secret_key = "Enrique" #Aqui creamos una clave secreta para nuestra aplicacion puede ser cualquiera
+#Aqui con app.config.from_object() vamos a ser q nuestro servidor tenga esta configuraciones
+app.config.from_object(DevelopmentConfig)
 
-csrf=CsrfProtect(app)#Y aqui le decimos q nuestros csrft eeste en nuestra aplicacion
+csrf=CsrfProtect()#Y aqui le decimos q nuestros csrf este en nuestra aplicacion pero no le pasamos nuestra varible de aplicacion
 
 #Aqui con el decorrador errorhandler() va a ser el q nos indentifique los errores en este caso el 404
 @app.errorhandler(404)
@@ -33,14 +38,16 @@ def page_not_found(error): #Esta funcion resive como parametro un error
 #Aqui sencillamente esta funcion se va a ejecutar siempre oosea de primer lugar antes q se ejecute otra funcion
 @app.before_request
 def before_request():
-	g.test=[1,2,3,4]
-	if "username" not in session:#Aqui sencillamente valido si no existe la variable de session
-		#print(request.endpoint)
-		print("El Usuario Nesecita Login!")
+	#Aqui sencillamente vemos si no ay una session y comprobamos si la ruta expecificado es a la q se accede
+	#en caso contrario de q si existe la seccion le dejamos q pase a la ruta
+	if "username" not in session and request.endpoint in ["comment"]:
+		return redirect(url_for("login"))#Si es asi retornamos y no dejamos q vaya a la ruta
+	elif "username" in session and request.endpoint in ["login","create_user"]:
+		return redirect(url_for("index"))
 
 @app.route("/")
 def index():
-	print(g.test)
+	#print(g.test)
 	if "username" in session: 
 		username=session["username"]
 		#print(username)
@@ -50,7 +57,7 @@ def index():
 #Este funcion se va a ejecutar al final o despues q se ejecute la funciones q comparte la vista
 @app.after_request
 def after_request(response):
-	print(g.test)
+	#print(g.test)
 	return response #Aqui siempre se va a devolver algo para q funcione esta funcion
 
 #Aqui funcion para crear un comentario
@@ -85,13 +92,22 @@ def login():
 	title="Curso Flask| Formulario Login"
 
 	if request.method == "POST" and login_form.validate():
-		username=login_form.username.data #Aqui lo q hago es tener los datos del usuario
-		success_message="Bienvenido {}".format(username) #Aqui creamos un mensaje
-		flash(success_message)#Aqui con la clase flash() le pasamos el mensaje para q lo muestre
+		#Aqui lo q hago es tener los datos del usuario
+		username=login_form.username.data 
+		password=login_form.password.data 
+		#Aqui hacemos un query de q si existe el username
+		user=User.query.filter_by(username=username).one()		
+		#Aqui consultamos si el usuario existe y verificamos si la contraseña es correcta
+		if user is not None and user.verify_password(password):	
+			success_message="Bienvenido {}".format(username) #Aqui creamos un mensaje
+			flash(success_message)#Aqui con la clase flash() le pasamos el mensaje para q lo muestre
+			session["username"]=username#Aqui creamos la varible de session de nuestro usuario
+			return redirect(url_for("index"))#Aqui retornamos a la vista
+		else:#sino existe el usuario y/o la contraseña es incorrecta
+			error_message="Usuario Ó Contraseña No Valida!"
+			flash(error_message)#Aqui con la clase flash() le pasamos el mensaje para q lo muestre
 
-		session["username"]=login_form.username.data #Aqui sencillamente creamos uan varible de seccion llamada username
-
-	return render_template("login.html",title=title,form=login_form)
+	return render_template("login.html",title=title,form=login_form)#Aqui retornamos a el login
 
 #Aqui esta es la ruta para cerrar seccion
 @app.route('/logout')
@@ -124,5 +140,31 @@ def ajax_login():
 	}
 	return json.dumps(response)#Aqui retorno en formato json los datos con la clase json.dumps()
 
+
+@app.route('/create_user',methods=["GET","POST"])
+def create_user():
+	title="Curso Flask| Formulario de Usuario"
+	create_form=forms.CreateUser(request.form)#Aqui obtemos los datos de nuestro formulario
+
+	if request.method == "POST" and create_form.validate():
+		#Aqui sencillamente acemos una instancia del modelo User y le agregamos los datos
+		user=User(create_form.username.data,
+				create_form.password.data,
+				create_form.email.data)
+		
+		db.session.add(user)#Aqui con la clase session.add() Añadimos a el usuario
+		db.session.commit()#Y aqui con session.commit() Hacemos la peticion o guardamos los cambios o datoas generados
+
+		success_message="Usuario Registrado en la Base de Datos "
+		flash(success_message)
+
+	return render_template("create_user.html",title=title,form=create_form)
+
 if __name__=='__main__':
-	app.run(debug=True,port=8080)
+	csrf.init_app(app)#Ahora con csrf.init_app() de esta manera iniciamos nuestra aplicacion
+	
+	db.init_app(app)#Aqui para iniciar nuestra base de datos a nuestra aplicacion
+	with app.app_context():#Aqui vemos si tenemos las tablas
+		db.create_all()#Aqui con la clase create_all() creamos nuestras tablas
+
+	app.run(port=8080)
