@@ -20,27 +20,22 @@ def length_honeypot(form,field):
 
 
 #Aqui se crea una clase y se le pasa la clase Form 
-class CommentForm(Form):
-	#Despues con StringField() creamos un input tipo texto con el nombres expecificado
-	#Con EmailField() creamos un input tipo email con el nombre expecificado
-	#Y con TextField() creamos un input tipo text tambien pero q recibira mas texto 
-	#Como sengundo parametro le indicamos las validaciones q queremos
-	#En este caso por medio de un lista mandamos a llamar a los metodos o clases correspondiente a las misma
-	username = StringField("username",[
-					validators.Required(message="El Username Es Requerido!."),
-					validators.length(min=4,max=25,message="Ingrese Un Username Valido!.")
-				])
-	email =	EmailField("Correo electronico",[
-				validators.Required(message="El Email Es Requerido!."),
-				validators.Email(message="Ingrese Un Email Valido")
+class CommentForm(Form):	
+	#Y con TextField() creamos un input tipo text tambien pero q recibira mas texto 	
+	comment = TextField("Comentario",[
+				validators.length(min=3,message="Ingrese Un Comentario Mas Largo!.")
 			])
-	comment = TextField("Comentario")
+	#este es para un campo de texto oculto
 	honeypot=HiddenField("",[
 				length_honeypot
 			])
 
 #Esta clase crea los input de nuestro login
 class LoginForm(Form):
+	#Despues con StringField() creamos un input tipo texto con el nombres expecificado
+	#Con EmailField() creamos un input tipo email con el nombre expecificado
+	#Como sengundo parametro le indicamos las validaciones q queremos
+	#En este caso por medio de un lista mandamos a llamar a los metodos o clases correspondiente a las misma
 	username = StringField("Username",[
 					validators.Required(message="El Username Es Requerido!."),
 					validators.length(min=4,max=25,message="Ingrese Un Username Valido!.")

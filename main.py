@@ -19,14 +19,23 @@ import json #Aqui para trabajar con formato Json
 
 from config import DevelopmentConfig #Aqui importamos este archivo con esta clase para hacer las configuraciones para nuestrso servidor
 
+from helper import date_format
+#Aqui esteas dos es para el enviar mensajes al correo electronico pero no me funciona porque ay q configurarlo bn
+#AQUI REVISAR LAS CONFIGURACIONES BN PARA Q EJECUTE
+from flask_mail import Mail
+from flask_mail import Message
+
 from models import db #Aqui importamos nuestra conexion
 from models import User #Aqui importamos el modelo User
+from models import Comment #Aqui importamos el model Comment
 
 app = Flask(__name__)
 #Aqui con app.config.from_object() vamos a ser q nuestro servidor tenga esta configuraciones
 app.config.from_object(DevelopmentConfig)
 
 csrf=CsrfProtect()#Y aqui le decimos q nuestros csrf este en nuestra aplicacion pero no le pasamos nuestra varible de aplicacion
+
+mail=Mail()#Aqui creamos una instancia de la clase Mail
 
 #Aqui con el decorrador errorhandler() va a ser el q nos indentifique los errores en este caso el 404
 @app.errorhandler(404)
@@ -63,13 +72,6 @@ def after_request(response):
 #Aqui funcion para crear un comentario
 @app.route('/comment',methods=["GET","POST"])
 def comment():
-
-	#Aqui creamos una varible q tenga nuestros cookie
-	#Con request.cookies.get() indicamos q tenga a los cookies
-	#Le pasamos como parametros el nombre del cookie y como sengundo si no existe q diga q no existe
-	custome_cookie=request.cookies.get("custome_cookie","No Existe Esta Cookie")
-	print(custome_cookie)#Aqui mandamos a imprimir nuestro valor de nuestros cookie
-
 	#Aqui llamaos a la clase forms.CommentForm() q tiene nuestro archivo
 	#Ahora si nuestra tambien si viene algun tipo de tados creamos una instancia con eso tipo de datos
 	#Para luego verlos en nuestros inputs
@@ -77,14 +79,31 @@ def comment():
 	
 	#Aqui sencillamente lo q se hace es q si el method es Post mostramos los datos nuestro formulario
 	if request.method=="POST" and comment_form.validate():
-		print (comment_form.username.data)
-		print (comment_form.email.data)
-		print (comment_form.comment.data)
+		user_id=session["user_id"]
+		comment=Comment(user_id=user_id,
+						text=comment_form.comment.data,)
+		
+		db.session.add(comment)
+		db.session.commit()
+
+		success_message="Nuevo Comentario Creado Satifactoriamente!"
+		flash(success_message)
 	else:
 		print("Error En El Formulario!.")
 	title="Curso Flask| Formulario De Comentarios"
 	return render_template("comment.html",title=title,form=comment_form)
 
+#Aqui la vista de reviews de los comentarios
+@app.route('/reviews/',methods=["GET"])
+@app.route('/reviews/<int:page>',methods=["GET"])
+def reviews(page=1):
+	per_page=3
+	comments=Comment.query.join(User).add_columns(
+												User.username,
+												Comment.text,
+												Comment.created_date).paginate(page,per_page,False)
+	title="Curso Flask| Vistas Para Ver"
+	return render_template("reviews.html",title=title,comments=comments,date_format=date_format)
 #Aqui la ruta del login
 @app.route('/login',methods=["GET","POST"])
 def login():
@@ -102,6 +121,7 @@ def login():
 			success_message="Bienvenido {}".format(username) #Aqui creamos un mensaje
 			flash(success_message)#Aqui con la clase flash() le pasamos el mensaje para q lo muestre
 			session["username"]=username#Aqui creamos la varible de session de nuestro usuario
+			session["user_id"]=user.id
 			return redirect(url_for("index"))#Aqui retornamos a la vista
 		else:#sino existe el usuario y/o la contraseña es incorrecta
 			error_message="Usuario Ó Contraseña No Valida!"
@@ -154,6 +174,13 @@ def create_user():
 		
 		db.session.add(user)#Aqui con la clase session.add() Añadimos a el usuario
 		db.session.commit()#Y aqui con session.commit() Hacemos la peticion o guardamos los cambios o datoas generados
+		#Aqui hacemos los repectivo para crear y enviar nuestro correo electronico a el correo
+		#hasta qui lo deje porque no me envia el correo y se queda la pagina cargando y no lo envia
+		msg=Message("Gracias Por Tu Registro!",
+					sender=app.config["MAIL_USERNAME"],
+					recipients=[user.email])
+		msg.html=render_template("email.html",user=user.username)
+		mail.send(msg)
 
 		success_message="Usuario Registrado en la Base de Datos "
 		flash(success_message)
@@ -162,8 +189,9 @@ def create_user():
 
 if __name__=='__main__':
 	csrf.init_app(app)#Ahora con csrf.init_app() de esta manera iniciamos nuestra aplicacion
-	
 	db.init_app(app)#Aqui para iniciar nuestra base de datos a nuestra aplicacion
+	mail.init_app(app)#Aqui tenenmos q iniciar nuestros configuaciones para mail
+
 	with app.app_context():#Aqui vemos si tenemos las tablas
 		db.create_all()#Aqui con la clase create_all() creamos nuestras tablas
 

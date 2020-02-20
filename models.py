@@ -15,6 +15,7 @@ class User(db.Model):
 	username=db.Column(db.String(50),unique=True)
 	email=db.Column(db.String(40))
 	password=db.Column(db.String(66))
+	comments=db.relationship("Comment")
 	created_date=db.Column(db.DateTime,default=datetime.datetime.now)
 
 	#Aqui iniciamos nuestro construtor para q tenga los datos
@@ -28,3 +29,11 @@ class User(db.Model):
 	#Aqui creamos otro metodo para verificar la contraseña encriptada
 	def verify_password(self, secret):
 		return bcrypt.check_password_hash(self.password,secret)
+
+class Comment(db.Model):	
+	__tablename__="Comments"
+	
+	id=db.Column(db.Integer,primary_key=True)
+	user_id=db.Column(db.Integer,db.ForeignKey("Users.id"))
+	text=db.Column(db.Text())
+	created_date=db.Column(db.DateTime,default=datetime.datetime.now)	
